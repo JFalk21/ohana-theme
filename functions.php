@@ -15,12 +15,12 @@
  * Dequeue the Storefront Parent theme core CSS
  */
 
-define('APWP_PRODUTO_INGRESSO', 110);
-define('APWP_PRODUTO_AGENDAMENTO', 494);
+define('ODWP_PRODUTO_INGRESSO', 000);
+define('ODWP_PRODUTO_AGENDAMENTO', 001);
 
-if (!function_exists('apwp_write_log')) {
+if (!function_exists('odwp_write_log')) {
 
-    function apwp_write_log($log) {
+    function odwp_write_log($log) {
         if (true === WP_DEBUG) {
             if (is_array($log) || is_object($log)) {
                 error_log(print_r($log, true));
@@ -45,7 +45,7 @@ function sf_child_theme_dequeue_style() {
  * Alterações referente a loja
  */
 
-add_action( 'init', 'abwp_remove_actions' );
+//add_action( 'init', 'abwp_remove_actions' );
  
 function abwp_remove_actions() {
 	remove_action( 'storefront_before_content', 'woocommerce_breadcrumb', 10 );
@@ -65,45 +65,45 @@ function abwp_remove_shop_page() {
         exit();
     }
 }
-add_action( 'template_redirect', 'abwp_remove_shop_page' );
+//add_action( 'template_redirect', 'abwp_remove_shop_page' );
 
-add_filter( 'woocommerce_checkout_fields' , 'abwp_override_checkout_fields' );
+//add_filter( 'woocommerce_checkout_fields' , 'abwp_override_checkout_fields' );
 function abwp_override_checkout_fields( $fields ) {
      $fields['order']['order_comments']['placeholder'] = 'Notas adicionais(opcional)';
      $fields['order']['order_comments']['label'] = 'Algo que gostaria de nos informar?';
      return $fields;
 }
 
-add_filter( 'woocommerce_return_to_shop_redirect', 'apwp_custom_empty_cart_redirect_url' );
-function apwp_custom_empty_cart_redirect_url(){
+//add_filter( 'woocommerce_return_to_shop_redirect', 'odwp_custom_empty_cart_redirect_url' );
+function odwp_custom_empty_cart_redirect_url(){
     global $woocommerce;
     $redirect_product = wp_redirect('/produto/passeio-de-lancha/');
     return $redirect_product;
 }
 
-add_filter( 'woocommerce_product_single_add_to_cart_text', 'abwp_woocommerce_custom_single_add_to_cart_text' ); 
+//add_filter( 'woocommerce_product_single_add_to_cart_text', 'abwp_woocommerce_custom_single_add_to_cart_text' ); 
 function abwp_woocommerce_custom_single_add_to_cart_text() {
     return __( 'Continuar para a compra', 'woocommerce' ); 
 }
 
-add_filter( 'woocommerce_add_to_cart_validation', 'apwp_remove_cart_item_before_add_to_cart', 20, 3 );
-function apwp_remove_cart_item_before_add_to_cart( $passed, $product_id, $quantity ) {
+//add_filter( 'woocommerce_add_to_cart_validation', 'odwp_remove_cart_item_before_add_to_cart', 20, 3 );
+function odwp_remove_cart_item_before_add_to_cart( $passed, $product_id, $quantity ) {
     if( ! WC()->cart->is_empty() )
         WC()->cart->empty_cart();
     return $passed;
 }
 
-add_filter('woocommerce_add_to_cart_redirect', 'apwp_add_to_cart_redirect');
-function apwp_add_to_cart_redirect() {
+//add_filter('woocommerce_add_to_cart_redirect', 'odwp_add_to_cart_redirect');
+function odwp_add_to_cart_redirect() {
     global $woocommerce;
     $redirect_checkout = wc_get_checkout_url();
     return $redirect_checkout;
 }
 
 
-function apwp_formata_email($order, $sent_to_admin, $plain_text){
+function odwp_formata_email($order, $sent_to_admin, $plain_text){
     $items = $order->get_items();
-    apwp_write_log("entrou: " . $order->get_status());
+    odwp_write_log("entrou: " . $order->get_status());
     if(strcmp($order->get_status(),'cancelled') == 0 || strcmp($order->get_status() , 'refunded') == 0 || strcmp($order->get_status() , 'on-hold') == 0  ||
         strcmp($order->get_status() , 'failed') == 0 || strcmp($order->get_status(), 'pending-payment') == 0){
 
@@ -115,14 +115,14 @@ function apwp_formata_email($order, $sent_to_admin, $plain_text){
         //Validar se o produto é o "ingresso"
         switch ($produto) {
             case 110:
-                apwp_write_log("entrou 2");
+                odwp_write_log("entrou 2");
 
                 $coupon_code = "";
                 
                 if($sent_to_admin){
-                    $coupon_code = apwp_generate_coupon(APWP_PRODUTO_AGENDAMENTO, $order->get_id(), $order_item->get_quantity());
+                    $coupon_code = odwp_generate_coupon(ODWP_PRODUTO_AGENDAMENTO, $order->get_id(), $order_item->get_quantity());
                 } else {
-                    $coupon_code = get_post_meta($order->get_id(), '_apwp_cupom_passeio', true);
+                    $coupon_code = get_post_meta($order->get_id(), '_odwp_cupom_passeio', true);
                 }
                 echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
                 break;
@@ -134,11 +134,11 @@ function apwp_formata_email($order, $sent_to_admin, $plain_text){
 
     }
 }
-add_action('woocommerce_email_before_order_table', 'apwp_formata_email', 0, 3);
+//add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 0, 3);
 
-function apwp_generate_coupon($product_id, $order_id, $quantity){
+function odwp_generate_coupon($product_id, $order_id, $quantity){
 
-        apwp_write_log("entrou 3");
+        odwp_write_log("entrou 3");
 
 
     $characters = "ABCDEFGHJKMNPQRSTUVWXYZ123456789";
@@ -153,9 +153,9 @@ function apwp_generate_coupon($product_id, $order_id, $quantity){
     } while ($coupon_id != 0);
 
 
-    apwp_write_log("codigo gerado:" . $coupon_code);
+    odwp_write_log("codigo gerado:" . $coupon_code);
     $product = wc_get_product( $product_id );
-    apwp_write_log("codigo gerado:" . $product->get_price());
+    odwp_write_log("codigo gerado:" . $product->get_price());
     
         
     $discount_type = 'fixed_cart';
@@ -180,19 +180,19 @@ function apwp_generate_coupon($product_id, $order_id, $quantity){
     update_post_meta( $new_coupon_id, 'apply_before_tax', 'yes' );
     update_post_meta( $new_coupon_id, 'free_shipping', 'no' );
 
-    update_post_meta($order_id, '_apwp_cupom_passeio', $coupon_code);
+    update_post_meta($order_id, '_odwp_cupom_passeio', $coupon_code);
     return $coupon_code;
 }
 
-function apwp_texto_apos_preco_agenda(){
+function odwp_texto_apos_preco_agenda(){
     echo "<span style='color:midnightblue;font-weight:bold;font-size:20px;'>👆 Escolha o úmero de pessoas";
 }
-add_action('woocommerce_after_add_to_cart_form', 'apwp_texto_apos_preco_agenda', 0);
+//add_action('woocommerce_after_add_to_cart_form', 'odwp_texto_apos_preco_agenda', 0);
 
-function apwp_bkap_update_order($order_id, $old_status, $new_status) {
-    apwp_write_log("Váriavel VALUES");
-    apwp_write_log($old_status);
-    apwp_write_log("Váriavel result");
-    apwp_write_log($new_status);
+function odwp_bkap_update_order($order_id, $old_status, $new_status) {
+    odwp_write_log("Váriavel VALUES");
+    odwp_write_log($old_status);
+    odwp_write_log("Váriavel result");
+    odwp_write_log($new_status);
 }
-add_action('woocommerce_order_status_changed', 'apwp_bkap_update_order', 0, 3);
+//add_action('woocommerce_order_status_changed', 'odwp_bkap_update_order', 0, 3);
