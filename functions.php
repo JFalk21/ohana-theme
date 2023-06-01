@@ -10,12 +10,16 @@
  * as the sf_child_theme_dequeue_style() function declaration.
  */
 //add_action( 'wp_enqueue_scripts', 'sf_child_theme_dequeue_style', 999 );
+function sf_child_theme_dequeue_style() {
+    wp_dequeue_style( 'storefront-style' );
+    wp_dequeue_style( 'storefront-woocommerce-style' );
+}
 
 /**
  * Dequeue the Storefront Parent theme core CSS
  */
 
-define('ODWP_PRODUTO_INGRESSO', 000);
+define('ODWP_PRODUTO_INGRESSO', 20);
 define('ODWP_PRODUTO_AGENDAMENTO', 001);
 
 if (!function_exists('odwp_write_log')) {
@@ -32,11 +36,6 @@ if (!function_exists('odwp_write_log')) {
 
 }
 
-function sf_child_theme_dequeue_style() {
-    wp_dequeue_style( 'storefront-style' );
-    wp_dequeue_style( 'storefront-woocommerce-style' );
-}
-
 /**
  * Note: DO NOT! alter or remove the code above this text and only add your custom PHP functions below this text.
  */
@@ -45,30 +44,30 @@ function sf_child_theme_dequeue_style() {
  * Alterações referente a loja
  */
 
-//add_action( 'init', 'abwp_remove_actions' );
+add_action( 'init', 'odwp_remove_actions' );
  
-function abwp_remove_actions() {
+function odwp_remove_actions() {
 	remove_action( 'storefront_before_content', 'woocommerce_breadcrumb', 10 );
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_meta', 10 );
-	//remove_action( 'storefront_footer', 'storefront_credit' );
-	remove_action( 'storefront_footer', 'storefront_handheld_footer_bar', 999 );
+	//remove_action( 'storefront_footer', 'storefront_handheld_footer_bar', 10 );
+	//remove_action( 'storefront_footer', 'storefront_credit', 10 );
 	//add_filter( 'wc_add_to_cart_message', '__return_false' );
-	/*remove_action( 'storefront_footer', 'storefront_footer', 999 );*/
+	//remove_action( 'storefront_footer', 'storefront_footer', 10 );
 	
 
 
 }
 
-function abwp_remove_shop_page() {
+function odwp_remove_shop_page() {
     if( is_shop() ){
         wp_redirect( home_url( '/produto/passeio-de-lancha/' ) );
         exit();
     }
 }
-//add_action( 'template_redirect', 'abwp_remove_shop_page' );
+//add_action( 'template_redirect', 'odwp_remove_shop_page' );
 
-//add_filter( 'woocommerce_checkout_fields' , 'abwp_override_checkout_fields' );
-function abwp_override_checkout_fields( $fields ) {
+//add_filter( 'woocommerce_checkout_fields' , 'odwp_override_checkout_fields' );
+function odwp_override_checkout_fields( $fields ) {
      $fields['order']['order_comments']['placeholder'] = 'Notas adicionais(opcional)';
      $fields['order']['order_comments']['label'] = 'Algo que gostaria de nos informar?';
      return $fields;
@@ -81,8 +80,8 @@ function odwp_custom_empty_cart_redirect_url(){
     return $redirect_product;
 }
 
-//add_filter( 'woocommerce_product_single_add_to_cart_text', 'abwp_woocommerce_custom_single_add_to_cart_text' ); 
-function abwp_woocommerce_custom_single_add_to_cart_text() {
+//add_filter( 'woocommerce_product_single_add_to_cart_text', 'odwp_woocommerce_custom_single_add_to_cart_text' ); 
+function odwp_woocommerce_custom_single_add_to_cart_text() {
     return __( 'Continuar para a compra', 'woocommerce' ); 
 }
 
