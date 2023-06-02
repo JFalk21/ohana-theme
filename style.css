@@ -23,6 +23,11 @@ Images License: GNU General Public License v2 or later
  * Add your own custom css below this text.
  */
 
- .product_meta .posted_in {display: none !important;}
+.product_meta .posted_in {display: none !important;}
 
 .product-type-simple {margin-top: 200px !important!}
+
+div.woocommerce {
+    padding-left: 80px !important;
+    padding-right: 80px !important;
+}
