@@ -312,3 +312,13 @@ function wc_billing_field_strings( $translated_text) {
     return $translated_text;
 }
 add_filter( 'gettext', 'wc_billing_field_strings', 10 );
+
+
+/**
+ * Funçoes uteis da loja
+ */
+
+/**
+ * Remove sugestões de produtos da loja
+ */
+add_filter('woocommerce_product_related_posts_query', '__return_empty_array', 100);
