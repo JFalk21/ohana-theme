@@ -166,7 +166,9 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
                 } else {
                     $coupon_code = get_post_meta($order->get_id(), '_odwp_cupom_passeio', true);
                 }
-                echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
+                if(!empty($coupon_code)) {
+                    echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
+                }
                 break;
             
             default:
