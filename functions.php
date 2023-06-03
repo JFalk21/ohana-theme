@@ -266,6 +266,10 @@ function odwp_bkap_update_order($order_id, $old_status, $new_status) {
  * @return void
  */
 function odwp_woocommerce_email_header($email_heading, $email){
+    if(empty($order)){
+        return;
+    }
+
     $order = $email->object;
 
     $items = $order->get_items();
@@ -292,7 +296,10 @@ function odwp_woocommerce_email_header($email_heading, $email){
 }
 
 function odwp_woocommerce_email_subject_customer_processing_order($subject, $order) {
-
+    if(empty($order)){
+        return;
+    }
+    
     if(strcmp($order->get_status(),'processing') == 0){
 
         foreach($order->get_items() as $item_id => $item) {
