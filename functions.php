@@ -145,6 +145,11 @@ add_filter('woocommerce_add_to_cart_redirect', 'odwp_add_to_cart_redirect');
  * @return void
  */
 function odwp_formata_email($order, $sent_to_admin, $plain_text){
+
+    if(empty($order)){
+        return;
+    }
+
     $items = $order->get_items();
 
     if(strcmp($order->get_status(),'cancelled') == 0 || strcmp($order->get_status() , 'refunded') == 0 || strcmp($order->get_status() , 'on-hold') == 0  ||
