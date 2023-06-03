@@ -27,7 +27,9 @@ Images License: GNU General Public License v2 or later
 
 .product-type-simple {margin-top: 200px !important!}
 
-div.woocommerce {
-    padding-left: 80px !important;
-    padding-right: 80px !important;
+@media (min-width: 601px) {
+    div.woocommerce  {
+        padding-left: 80px !important;
+        padding-right: 80px !important;
+    }
 }
