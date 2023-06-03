@@ -33,3 +33,7 @@ Images License: GNU General Public License v2 or later
         padding-right: 80px !important;
     }
 }
+
+button#place_order {
+    background: #0A2062 !important;
+}
