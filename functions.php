@@ -54,14 +54,14 @@ add_action('wp_enqueue_scripts', 'odwp_enqueue_scripts');
  * Alterações referente a loja
  */
 
+/**
+ * Remove sugestões de produtos da loja
+ */
+add_filter('woocommerce_product_related_posts_query', '__return_empty_array', 100);
  
 function odwp_remove_actions() {
 	remove_action( 'storefront_before_content', 'woocommerce_breadcrumb', 10 );
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_meta', 10 );
-    
-    //Removendo o gancho padrão e adicionando meu customizado
-    remove_action('woocommerce_email_header', array(WC()->mailer(), 'email_header'));
-    add_action('woocommerce_email_header', 'odwp_woocommerce_email_header', 10, 2);
 }
 add_action( 'init', 'odwp_remove_actions' );
 
@@ -257,58 +257,25 @@ function odwp_bkap_update_order($order_id, $old_status, $new_status) {
 }
 //add_action('woocommerce_order_status_changed', 'odwp_bkap_update_order', 0, 3);
 
-
 /**
- * Sobrescrevando o gancho do WC para ter o nosso Heading customizado
- * Adição do gancho feita na action -> init
- * @param mixed $email_heading
- * @param mixed $email
- * @return void
+ * Filtrando o Subject e o Heading dos emails do WooCommerce pra se adaptar ao ingresso e a agenda
+ * @param mixed $subject
+ * @param mixed $order
+ * @return mixed
  */
-function odwp_woocommerce_email_header($email_heading, $email){
-    if(empty($order)){
-        return;
-    }
-
-    $order = $email->object;
-
-    $items = $order->get_items();
-    $hasIngresso = false;
-    $hasAgenda = false;
-
-    if(strcmp($order->get_status(),'processing') == 0){
-
-        foreach($items as $item_id => $item) {
-            if($item->get_product_id() == ODWP_PRODUTO_AGENDAMENTO){
-                $hasAgenda = true;
-            }
-
-            if($item->get_product_id() == ODWP_PRODUTO_INGRESSO){
-                $hasIngresso = true;
-            }
-        }
-    
-        $email_heading = $hasAgenda ? "Seu agendamento foi aprovado!" : $email_heading;
-        $email_heading = $hasIngresso ? "Sua compra foi confirmada!" : $email_heading;
-    }
-
-    wc_get_template('emails/email-header.php', array('email_heading' => $email_heading));
-}
-
 function odwp_woocommerce_email_subject_customer_processing_order($subject, $order) {
     if(empty($order)){
         return;
     }
-    
-    if(strcmp($order->get_status(),'processing') == 0){
 
+    if(strcmp($order->get_status(),'processing') == 0){
         foreach($order->get_items() as $item_id => $item) {
             if($item->get_product_id() == ODWP_PRODUTO_INGRESSO){
-                return "Sua compra foi confirmada!";
+                $subject = "Sua compra foi confirmada!";
             }
 
             if($item->get_product_id() == ODWP_PRODUTO_AGENDAMENTO){
-                return "Seu agendamento foi aprovado!";
+                $subject = "Seu agendamento foi aprovado!";
             }
         }
 
@@ -317,6 +284,7 @@ function odwp_woocommerce_email_subject_customer_processing_order($subject, $ord
     return $subject;
 }
 add_filter('woocommerce_email_subject_customer_processing_order', 'odwp_woocommerce_email_subject_customer_processing_order', 10, 2);
+add_filter('woocommerce_email_heading_customer_processing_order', 'odwp_woocommerce_email_subject_customer_processing_order', 10, 2);
 
 /**
  * Alterando o texto do endereço de faturamento no e-mail para Informações do Cliente
@@ -335,10 +303,196 @@ add_filter( 'gettext', 'wc_billing_field_strings', 10 );
 
 
 /**
- * Funçoes uteis da loja
+ * PIX
+ * Vou deixar comentado aqui para reativar quando a merda do PagSeguro Sandbox voltar a funcionar
  */
+/*function odwp_pgly_wc_piggly_pix_payload($payload, $pixEntity, $order){
+    odwp_write_log($payload);
 
-/**
- * Remove sugestões de produtos da loja
- */
-add_filter('woocommerce_product_related_posts_query', '__return_empty_array', 100);
+    return $payload;
+}
+add_filter('pgly_wc_piggly_pix_payload', 'odwp_pgly_wc_piggly_pix_payload', 10, 3);
+
+function odwp_pgly_wc_piggly_pix_process($pixEntity){
+    odwp_write_log("LETS GOOO");
+}
+add_action('pgly_wc_piggly_pix_process', 'odwp_pgly_wc_piggly_pix_process');*/
+
+
+/// STATIC PAYLOAD
+/*
+Octavio Pedro Alves
+Piggly\WooPixGateway\Vendor\Piggly\Pix\StaticPayload Object
+(
+    [mpm:protected] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\MPM Object
+        (
+            [emvs:protected] => Array
+                (
+                    [00] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 
+                            [default:protected] => 01
+                            [id:protected] => 00
+                            [name:protected] => Payload Format Indicator
+                            [size:protected] => 2
+                            [required:protected] => 1
+                        )
+
+                    [01] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 
+                            [default:protected] => 11
+                            [id:protected] => 01
+                            [name:protected] => Point of Initiation Method
+                            [size:protected] => 2
+                            [required:protected] => 
+                        )
+
+                    [26] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\MultiField Object
+                        (
+                            [minId:protected] => 0
+                            [maxId:protected] => 99
+                            [fields:protected] => Array
+                                (
+                                    [00] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                                        (
+                                            [value:protected] => 
+                                            [default:protected] => br.gov.bcb.pix
+                                            [id:protected] => 00
+                                            [name:protected] => Globally Unique Identifier
+                                            [size:protected] => 32
+                                            [required:protected] => 1
+                                        )
+
+                                    [01] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                                        (
+                                            [value:protected] => 48a8ea7c-1162-45fa-a110-51b6478ea6a6
+                                            [default:protected] => 
+                                            [id:protected] => 01
+                                            [name:protected] => Pix Key
+                                            [size:protected] => 36
+                                            [required:protected] => 1
+                                        )
+
+                                    [02] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                                        (
+                                            [value:protected] => COMPRA EM OHANA DIVE
+                                            [default:protected] => 
+                                            [id:protected] => 02
+                                            [name:protected] => Payment Description
+                                            [size:protected] => 40
+                                            [required:protected] => 
+                                        )
+
+                                )
+
+                            [id:protected] => 26
+                            [name:protected] => Merchant Account Information
+                            [size:protected] => 99
+                            [required:protected] => 1
+                        )
+
+                    [52] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 
+                            [default:protected] => 0000
+                            [id:protected] => 52
+                            [name:protected] => Merchant Category Code
+                            [size:protected] => 4
+                            [required:protected] => 1
+                        )
+
+                    [53] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 
+                            [default:protected] => 986
+                            [id:protected] => 53
+                            [name:protected] => Transaction Currency
+                            [size:protected] => 3
+                            [required:protected] => 1
+                        )
+
+                    [54] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 280.00
+                            [default:protected] => 
+                            [id:protected] => 54
+                            [name:protected] => Transaction Amount
+                            [size:protected] => 13
+                            [required:protected] => 
+                        )
+
+                    [58] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 
+                            [default:protected] => BR
+                            [id:protected] => 58
+                            [name:protected] => Country Code
+                            [size:protected] => 2
+                            [required:protected] => 1
+                        )
+
+                    [59] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => OCTAVIO PEDRO ALVES
+                            [default:protected] => 
+                            [id:protected] => 59
+                            [name:protected] => Merchant Name
+                            [size:protected] => 25
+                            [required:protected] => 1
+                        )
+
+                    [60] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => ITAPEMA
+                            [default:protected] => 
+                            [id:protected] => 60
+                            [name:protected] => Merchant City
+                            [size:protected] => 15
+                            [required:protected] => 1
+                        )
+
+                    [61] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                        (
+                            [value:protected] => 
+                            [default:protected] => 
+                            [id:protected] => 61
+                            [name:protected] => Postal Code
+                            [size:protected] => 10
+                            [required:protected] => 
+                        )
+
+                    [62] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\MultiField Object
+                        (
+                            [minId:protected] => 0
+                            [maxId:protected] => 99
+                            [fields:protected] => Array
+                                (
+                                    [05] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
+                                        (
+                                            [value:protected] => O2WUE3PSLLI6Z5HEFX7FCWW04
+                                            [default:protected] => ***
+                                            [id:protected] => 05
+                                            [name:protected] => Reference Label
+                                            [size:protected] => 25
+                                            [required:protected] => 
+                                        )
+
+                                )
+
+                            [id:protected] => 62
+                            [name:protected] => Additional Data Field Template
+                            [size:protected] => 99
+                            [required:protected] => 1
+                        )
+
+                )
+
+            [code:protected] => 
+        )
+
+)
+
+
+
+*/
