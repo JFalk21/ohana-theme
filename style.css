@@ -27,10 +27,16 @@ Images License: GNU General Public License v2 or later
 
 .product-type-simple {margin-top: 200px !important!}
 
-@media (min-width: 601px) {
+@media (min-width: 700px) {
     div.woocommerce  {
         padding-left: 80px !important;
         padding-right: 80px !important;
+    }
+}
+@media (max-width: 700px) {
+    div.woocommerce  {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
     }
 }
 
