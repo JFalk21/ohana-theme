@@ -28,7 +28,7 @@ function sf_child_theme_dequeue_style() {
   */
 
 define('ODWP_PRODUTO_INGRESSO', 20);
-define('ODWP_PRODUTO_AGENDAMENTO', 458);
+define('ODWP_PRODUTO_AGENDAMENTO', 571);
 
 if (!function_exists('odwp_write_log')) {
 
@@ -248,14 +248,6 @@ function odwp_texto_apos_preco_agenda(){
     echo "<span style='color:midnightblue;font-weight:bold;font-size:20px;'>👆 Escolha o úmero de pessoas";
 }
 add_action('woocommerce_after_add_to_cart_form', 'odwp_texto_apos_preco_agenda', 0);
-
-function odwp_bkap_update_order($order_id, $old_status, $new_status) {
-    odwp_write_log("Váriavel VALUES");
-    odwp_write_log($old_status);
-    odwp_write_log("Váriavel result");
-    odwp_write_log($new_status);
-}
-//add_action('woocommerce_order_status_changed', 'odwp_bkap_update_order', 0, 3);
 
 /**
  * Filtrando o Subject e o Heading dos emails do WooCommerce pra se adaptar ao ingresso e a agenda
