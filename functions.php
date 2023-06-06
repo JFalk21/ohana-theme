@@ -50,6 +50,8 @@ function odwp_enqueue_scripts() {
 
 add_action('wp_enqueue_scripts', 'odwp_enqueue_scripts');
 
+add_action( 'send_headers', 'send_frame_options_header', 10, 0 );
+
 /**
  * Alterações referente a loja
  */
