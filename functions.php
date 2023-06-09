@@ -10,6 +10,9 @@
  * as the sf_child_theme_dequeue_style() function declaration.
  */
 //add_action( 'wp_enqueue_scripts', 'sf_child_theme_dequeue_style', 999 );
+
+use Piggly\WooPixGateway\Core\Entities\PixEntity;
+use Piggly\WooPixGateway\Vendor\Piggly\Pix\DynamicPayload;
 function sf_child_theme_dequeue_style() {
     wp_dequeue_style( 'storefront-style' );
     wp_dequeue_style( 'storefront-woocommerce-style' );
@@ -51,6 +54,90 @@ function odwp_enqueue_scripts() {
 add_action('wp_enqueue_scripts', 'odwp_enqueue_scripts');
 
 add_action( 'send_headers', 'send_frame_options_header', 10, 0 );
+
+function odwp_obter_abreviacao_estado($estado) {
+    $estados = array(
+        'Acre' => 'AC',
+        'Alagoas' => 'AL',
+        'Amapá' => 'AP',
+        'Amazonas' => 'AM',
+        'Bahia' => 'BA',
+        'Ceará' => 'CE',
+        'Distrito Federal' => 'DF',
+        'Espírito Santo' => 'ES',
+        'Goiás' => 'GO',
+        'Maranhão' => 'MA',
+        'Mato Grosso' => 'MT',
+        'Mato Grosso do Sul' => 'MS',
+        'Minas Gerais' => 'MG',
+        'Pará' => 'PA',
+        'Paraíba' => 'PB',
+        'Paraná' => 'PR',
+        'Pernambuco' => 'PE',
+        'Piauí' => 'PI',
+        'Rio de Janeiro' => 'RJ',
+        'Rio Grande do Norte' => 'RN',
+        'Rio Grande do Sul' => 'RS',
+        'Rondônia' => 'RO',
+        'Roraima' => 'RR',
+        'Santa Catarina' => 'SC',
+        'São Paulo' => 'SP',
+        'Sergipe' => 'SE',
+        'Tocantins' => 'TO'
+    );
+
+    $estado = ucwords(strtolower($estado)); // Converter para maiúsculas apenas o primeiro caractere de cada palavra
+
+    if (isset($estados[$estado])) {
+        return $estados[$estado];
+    } else {
+        return 'Estado inválido';
+    }
+}
+
+function separarNumeroTelefone($numeroTelefone) {
+    // Remover caracteres não numéricos
+    $numeroTelefone = preg_replace('/[^0-9]/', '', $numeroTelefone);
+
+    $codigoPais = '';
+    $ddd = '';
+    $telefone = '';
+
+    if (strlen($numeroTelefone) >= 10) {
+        // Extrair código do país (se existir)
+        if (strlen($numeroTelefone) > 11) {
+            $codigoPais = substr($numeroTelefone, 0, strlen($numeroTelefone) - 11);
+        }
+
+        // Extrair DDD
+        $ddd = substr($numeroTelefone, -11, 2);
+
+        // Extrair telefone
+        $telefone = substr($numeroTelefone, -9);
+
+        // Verificar se o nono dígito é facultativo
+        if (strlen($telefone) == 8) {
+            $telefone = substr($telefone, 0, 4) . '-' . substr($telefone, 4);
+        } else if (strlen($telefone) == 9) {
+            $telefone = substr($telefone, 0, 5) . '-' . substr($telefone, 5);
+        }
+    } else {
+        // Número de telefone inválido
+        return 'Número de telefone inválido';
+    }
+
+    // Adicionar código do Brasil (se necessário)
+    if (empty($codigoPais)) {
+        $codigoPais = '55';
+    }
+
+    // Retornar array com código do país, DDD e telefone
+    return array(
+        'codigo_pais' => $codigoPais,
+        'ddd' => $ddd,
+        'telefone' => $telefone
+    );
+}
 
 /**
  * Alterações referente a loja
@@ -300,193 +387,192 @@ add_filter( 'gettext', 'wc_billing_field_strings', 10 );
  * PIX
  * Vou deixar comentado aqui para reativar quando a merda do PagSeguro Sandbox voltar a funcionar
  */
-/*function odwp_pgly_wc_piggly_pix_payload($payload, $pixEntity, $order){
+function odwp_pgly_wc_piggly_pix_payload($payload, $pixEntity, $order){
+    odwp_write_log("Payload");
     odwp_write_log($payload);
+
+    odwp_write_log("Entity");
+    odwp_write_log($pixEntity);
 
     return $payload;
 }
-add_filter('pgly_wc_piggly_pix_payload', 'odwp_pgly_wc_piggly_pix_payload', 10, 3);
+//add_filter('pgly_wc_piggly_pix_payload', 'odwp_pgly_wc_piggly_pix_payload', 10, 3);
 
 function odwp_pgly_wc_piggly_pix_process($pixEntity){
-    odwp_write_log("LETS GOOO");
-}
-add_action('pgly_wc_piggly_pix_process', 'odwp_pgly_wc_piggly_pix_process');*/
+    $order = $pixEntity->getOrder();
 
+    odwp_write_log($order->get_id());
+
+    $pix_transaction = get_post_meta($order->get_id(), '_jfutils_pixtransaction', true);
+
+    odwp_write_log($pix_transaction);
+    if(!empty($pix_transaction) && intval($order->get_id()) > 620){
+        $url = sprintf("https://sandbox.api.pagseguro.com/orders/%s", $pix_transaction);
+        $args = array(
+            'method' => 'GET',
+            'timeout' => 45,
+            'redirection' => 5,
+            'headers' => array(
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . 'A9D04CAD2EC24628AEAA2DBE91EC66F1' 
+            ),
+        );
+
+        $response = wp_remote_get($url, $args);
+        
+        $body = json_decode($response['body']);
+        //odwp_write_log($body);
+        if(isset($body->charges)) {
+
+            if(strcasecmp($body->charges[0]->status, "PAID") == 0){
+                odwp_write_log("TA PAGO CARALHO");
+                $pixEntity->setstatus('paid');
+            } 
+        } else {
+            odwp_write_log("Não ta pago");
+        }
+    }
+
+    /**/
+    return $pixEntity;
+}
+add_filter('pgly_wc_piggly_pix_process', 'odwp_pgly_wc_piggly_pix_process');
+
+function odwp_pgly_wc_piggly_pix_to_pay($pixEntity) {
+
+
+    $order = $pixEntity->getOrder();
+
+    $items = [];
+
+    foreach($order->get_items() as $item) {
+        $product = wc_get_product($item->get_product_id());
+        $pixItem = array(
+            "name" => $item->get_name(),
+            "quantity" => $item->get_quantity(),
+            "unit_amount" => $product->get_price(),
+        );
+        $items[] = $pixItem;
+    }
+
+    $billing_neighborhood = get_post_meta($order->get_id(), '_billing_neighborhood', true);
+    $billing_number = get_post_meta($order->get_id(), '_billing_number', true);
+    $billing_postcode = get_post_meta($order->get_id(), '_billing_postcode', true);
+    $billing_cpf = get_post_meta($order->get_id(), '_billing_cpf', true);
+    $billing_cnpj = get_post_meta($order->get_id(), '_billing_cnpj', true);
+    $billing_tax_id = empty($billing_cpf) ? (empty($billing_cnpj) ? "ERROR" : $billing_cnpj) : $billing_cpf;
+    $phone_number = separarNumeroTelefone($order->get_billing_phone());
+
+    $pix_data = array(
+        "reference_id"=> 'OD-'. $pixEntity->getTxid(),
+        "customer" => array(
+            "name" => $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+            "email" => $order->get_billing_email(),
+            "tax_id" => preg_replace('/[^0-9]/', "", $billing_tax_id),
+            "phones" => [ [
+                    "country"=> $phone_number['codigo_pais'],
+                    "area"=> $phone_number["ddd"],
+                    "number"=> str_replace('-', '', $phone_number["telefone"]),
+                    "type"=> "MOBILE"
+                ] ]
+            ),
+        "items" =>  $items,
+        "qr_codes"=> arraY(
+             array(
+                "amount"=> array(
+                    "value"=> $pixEntity->getAmount()
+                ),
+                "expiration_date"=> $pixEntity->getExpiresAt()->format('c'),
+            )
+        ),
+        "shipping" => array(
+            "address" => array(
+                "street"=>  $order->get_billing_address_1(),
+                "number"=> strval($billing_number),
+                "complement"=> (empty($order->get_billing_address_2()) ? "-" : $order->get_billing_address_2()),
+                "locality"=> $billing_neighborhood,
+                "city"=> $order->get_billing_city(),
+                "region_code"=> $order->get_billing_state(),
+                "country"=> "BRA",
+                "postal_code"=> str_replace('-', '', strval($billing_postcode)),
+            )
+        ),
+        "notification_urls"=> [
+            "https://ohanadive.com.br"
+        ]
+    );
+
+    $url = "https://api.pagseguro.com/orders";
+    $args = array(
+        'method' => 'POST',
+        'timeout' => 45,
+        'redirection' => 5,
+        'headers' => array(
+            'Content-Type' => 'application/json',
+            'Authorization' => 'Bearer ' . '3f0873fc-c351-4fee-a22a-6130e3e990c8ca39f9e54191bc18b65720377bab910bbd40-9fa4-4a9d-bf17-16631338b5fb' 
+        ),
+        'body' => json_encode($pix_data),
+    );
+
+    $return = wp_remote_post($url, $args);
+
+    if(!is_wp_error($return)) {
+        odwp_write_log("Retorno");
+        odwp_write_log($return);
+
+        if(strcmp(wp_remote_retrieve_response_code($return), '201') == 0) {
+            $body = $return['body'];
+            $body = json_decode($body);
+
+            //odwp_write_log($body);
+
+            add_post_meta($order->get_id(), '_jfutils_pixtransaction', $body->qr_codes[0]->id, true);
+
+            odwp_write_log("Body");
+            odwp_write_log($body);
+        }
+
+    } else {
+        odwp_write_log("Retorno falho");
+
+        odwp_write_log($return);
+    }
+}
+add_action('pgly_wc_piggly_pix_to_pay', 'odwp_pgly_wc_piggly_pix_to_pay');
 
 /// STATIC PAYLOAD
-/*
-Octavio Pedro Alves
-Piggly\WooPixGateway\Vendor\Piggly\Pix\StaticPayload Object
-(
-    [mpm:protected] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\MPM Object
-        (
-            [emvs:protected] => Array
-                (
-                    [00] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 
-                            [default:protected] => 01
-                            [id:protected] => 00
-                            [name:protected] => Payload Format Indicator
-                            [size:protected] => 2
-                            [required:protected] => 1
-                        )
+/* 
 
-                    [01] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 
-                            [default:protected] => 11
-                            [id:protected] => 01
-                            [name:protected] => Point of Initiation Method
-                            [size:protected] => 2
-                            [required:protected] => 
-                        )
-
-                    [26] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\MultiField Object
-                        (
-                            [minId:protected] => 0
-                            [maxId:protected] => 99
-                            [fields:protected] => Array
-                                (
-                                    [00] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                                        (
-                                            [value:protected] => 
-                                            [default:protected] => br.gov.bcb.pix
-                                            [id:protected] => 00
-                                            [name:protected] => Globally Unique Identifier
-                                            [size:protected] => 32
-                                            [required:protected] => 1
-                                        )
-
-                                    [01] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                                        (
-                                            [value:protected] => 48a8ea7c-1162-45fa-a110-51b6478ea6a6
-                                            [default:protected] => 
-                                            [id:protected] => 01
-                                            [name:protected] => Pix Key
-                                            [size:protected] => 36
-                                            [required:protected] => 1
-                                        )
-
-                                    [02] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                                        (
-                                            [value:protected] => COMPRA EM OHANA DIVE
-                                            [default:protected] => 
-                                            [id:protected] => 02
-                                            [name:protected] => Payment Description
-                                            [size:protected] => 40
-                                            [required:protected] => 
-                                        )
-
-                                )
-
-                            [id:protected] => 26
-                            [name:protected] => Merchant Account Information
-                            [size:protected] => 99
-                            [required:protected] => 1
-                        )
-
-                    [52] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 
-                            [default:protected] => 0000
-                            [id:protected] => 52
-                            [name:protected] => Merchant Category Code
-                            [size:protected] => 4
-                            [required:protected] => 1
-                        )
-
-                    [53] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 
-                            [default:protected] => 986
-                            [id:protected] => 53
-                            [name:protected] => Transaction Currency
-                            [size:protected] => 3
-                            [required:protected] => 1
-                        )
-
-                    [54] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 280.00
-                            [default:protected] => 
-                            [id:protected] => 54
-                            [name:protected] => Transaction Amount
-                            [size:protected] => 13
-                            [required:protected] => 
-                        )
-
-                    [58] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 
-                            [default:protected] => BR
-                            [id:protected] => 58
-                            [name:protected] => Country Code
-                            [size:protected] => 2
-                            [required:protected] => 1
-                        )
-
-                    [59] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => OCTAVIO PEDRO ALVES
-                            [default:protected] => 
-                            [id:protected] => 59
-                            [name:protected] => Merchant Name
-                            [size:protected] => 25
-                            [required:protected] => 1
-                        )
-
-                    [60] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => ITAPEMA
-                            [default:protected] => 
-                            [id:protected] => 60
-                            [name:protected] => Merchant City
-                            [size:protected] => 15
-                            [required:protected] => 1
-                        )
-
-                    [61] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                        (
-                            [value:protected] => 
-                            [default:protected] => 
-                            [id:protected] => 61
-                            [name:protected] => Postal Code
-                            [size:protected] => 10
-                            [required:protected] => 
-                        )
-
-                    [62] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\MultiField Object
-                        (
-                            [minId:protected] => 0
-                            [maxId:protected] => 99
-                            [fields:protected] => Array
-                                (
-                                    [05] => Piggly\WooPixGateway\Vendor\Piggly\Pix\Emv\Field Object
-                                        (
-                                            [value:protected] => O2WUE3PSLLI6Z5HEFX7FCWW04
-                                            [default:protected] => ***
-                                            [id:protected] => 05
-                                            [name:protected] => Reference Label
-                                            [size:protected] => 25
-                                            [required:protected] => 
-                                        )
-
-                                )
-
-                            [id:protected] => 62
-                            [name:protected] => Additional Data Field Template
-                            [size:protected] => 99
-                            [required:protected] => 1
-                        )
-
-                )
-
-            [code:protected] => 
-        )
-
-)
+ERROS DA CHAMADA DO PAGSEGURO PRA CORRIGIR
 
 
-
+{
+    "error_messages": [
+        {
+            "code": "40002",
+            "description": "must be a valid region code by ISO 3166-2:BR",
+            "parameter_name": "shipping.address.region_code"
+        },
+        {
+            "code": "40002",
+            "description": "must be between 10000000 and 999999999",
+            "parameter_name": "customer.phones[0].number"
+        },
+        {
+            "code": "40002",
+            "description": "must not be blank",
+            "parameter_name": "shipping.address.complement"
+        },
+        {
+            "code": "40002",
+            "description": "must be a valid CPF or CNPJ",
+            "parameter_name": "customer.tax_id"
+        },
+        {
+            "code": "40002",
+            "description": "must have 8 digits",
+            "parameter_name": "shipping.address.postal_code" OK
+        }
+    ]
+}
 */
