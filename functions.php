@@ -64,6 +64,7 @@ add_filter('woocommerce_product_related_posts_query', '__return_empty_array', 10
 function odwp_remove_actions() {
 	remove_action( 'storefront_before_content', 'woocommerce_breadcrumb', 10 );
 	remove_action( 'woocommerce_single_product_summary', 'woocommerce_template_single_meta', 10 );
+    remove_action( 'storefront_page', 'storefront_page_header', 10 );
 }
 add_action( 'init', 'odwp_remove_actions' );
 
