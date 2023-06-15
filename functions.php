@@ -27,9 +27,6 @@ function sf_child_theme_dequeue_style() {
   * Defines
   */
 
-define('ODWP_PRODUTO_INGRESSO', 20);
-define('ODWP_PRODUTO_AGENDAMENTO', 571);
-
 if (!function_exists('odwp_write_log')) {
 
     function odwp_write_log($log) {
@@ -155,6 +152,16 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
 
     $items = $order->get_items();
 
+    $wc_options = get_option('jfutils-wc');
+
+
+    if(!empty($wc_options)){
+        if(empty($wc_options['jfu-wc-ticket-product']) && empty($wc_options['jfu-wc-booking-product'])) {
+            return;
+        }
+    }
+
+
     if(strcmp($order->get_status(),'cancelled') == 0 || strcmp($order->get_status() , 'refunded') == 0 || strcmp($order->get_status() , 'on-hold') == 0  ||
         strcmp($order->get_status() , 'failed') == 0 || strcmp($order->get_status(), 'pending-payment') == 0){
 
@@ -165,12 +172,12 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
         $produto = $order_item->get_product_id();
         //Validar se o produto é o "ingresso"
         switch ($produto) {
-            case ODWP_PRODUTO_INGRESSO:
+            case $wc_options['jfu-wc-ticket-product']:
 
                 $coupon_code = "";
                 
                 if($sent_to_admin){
-                    $coupon_code = odwp_generate_coupon(ODWP_PRODUTO_AGENDAMENTO, $order->get_id(), $order_item->get_quantity());
+                    $coupon_code = odwp_generate_coupon($wc_options['jfu-wc-booking-product'], $order->get_id(), $order_item->get_quantity());
                 } else {
                     $coupon_code = get_post_meta($order->get_id(), '_odwp_cupom_passeio', true);
                 }
@@ -210,7 +217,6 @@ function odwp_generate_coupon($product_id, $order_id, $quantity){
 
     odwp_write_log("codigo gerado:" . $coupon_code);
     $product = wc_get_product( $product_id );
-    odwp_write_log("preço produto:" . $product->get_price());
         
     $discount_type = 'fixed_cart';
     $amount = $quantity * intval($product->get_price());
@@ -263,13 +269,17 @@ function odwp_woocommerce_email_subject_customer_processing_order($subject, $ord
         return;
     }
 
+    $wc_options = get_option('jfutils-wc');
+    $produto_ingresso = $wc_options['jfu-wc-ticket-product'];
+    $produto_agenda = $wc_options['jfu-wc-booking-product'];
+
     if(strcmp($order->get_status(),'processing') == 0){
         foreach($order->get_items() as $item_id => $item) {
-            if($item->get_product_id() == ODWP_PRODUTO_INGRESSO){
+            if($item->get_product_id() == $produto_ingresso){
                 $subject = "Sua compra foi confirmada!";
             }
 
-            if($item->get_product_id() == ODWP_PRODUTO_AGENDAMENTO){
+            if($item->get_product_id() == $produto_agenda){
                 $subject = "Seu agendamento foi aprovado!";
             }
         }
