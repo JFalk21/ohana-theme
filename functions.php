@@ -193,7 +193,7 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
 
     }
 }
-add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 20, 3);
+//add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 20, 3);
 
 /**
  * Cria um cupom para ser enviado por e-mail na compra de um ingresso
