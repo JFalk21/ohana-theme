@@ -179,7 +179,7 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
                 if($sent_to_admin){
                     $coupon_code = odwp_generate_coupon($wc_options['jfu-wc-booking-product'], $order->get_id(), $order_item->get_quantity());
                 } else {
-                    $coupon_code = get_post_meta($order->get_id(), '_odwp_cupom_passeio', true);
+                    $coupon_code = get_post_meta($order->get_id(), '_jfutils_gen_coupon', true);
                 }
                 if(!empty($coupon_code)) {
                     echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
@@ -193,7 +193,7 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
 
     }
 }
-//add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 20, 3);
+add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 20, 3);
 
 /**
  * Cria um cupom para ser enviado por e-mail na compra de um ingresso
@@ -245,7 +245,7 @@ function odwp_generate_coupon($product_id, $order_id, $quantity){
     update_post_meta( $new_coupon_id, 'bkap_coupon_start_date', $begin_date );
     update_post_meta( $new_coupon_id, 'bkap_coupon_end_date', $end_date );
 
-    update_post_meta($order_id, '_odwp_cupom_passeio', $coupon_code);
+    update_post_meta($order_id, '_jfutils_gen_coupon', $coupon_code);
     return $coupon_code;
 }
 
