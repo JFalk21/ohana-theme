@@ -182,8 +182,7 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
                     $coupon_code = get_post_meta($order->get_id(), '_jfutils_gen_coupon', true);
                 }
                 if(!empty($coupon_code)) {
-                    //TODO: PRINTAR ISSO QUANDO O WEBHOOK PAGSEGURO ESTIVER OK!
-                    //echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
+                    echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
                 }
                 break;
             
