@@ -177,7 +177,7 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
                 $coupon_code = "";
                 
                 if($sent_to_admin){
-                    $coupon_code = odwp_generate_coupon($wc_options['jfu-wc-booking-product'], $order->get_id(), $order_item->get_quantity());
+                    $coupon_code = jfutils_generate_coupon($wc_options['jfu-wc-booking-product'], $order->get_id(), $order_item->get_quantity());
                 } else {
                     $coupon_code = get_post_meta($order->get_id(), '_jfutils_gen_coupon', true);
                 }
@@ -194,60 +194,6 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
     }
 }
 add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 20, 3);
-
-/**
- * Cria um cupom para ser enviado por e-mail na compra de um ingresso
- * @param mixed $product_id
- * @param mixed $order_id
- * @param mixed $quantity
- * @return string
- */
-function odwp_generate_coupon($product_id, $order_id, $quantity){
-
-    $characters = "ABCDEFGHJKMNPQRSTUVWXYZ123456789";
-    $char_length = "10";
-    $coupon_code = "";
-    $coupon_id = 99;
-
-    do {
-        //gera uma string de cupom aleatoria, depois verifica se já existe
-        $coupon_code = substr( str_shuffle( $characters ),  0, $char_length );
-        $coupon_id = wc_get_coupon_id_by_code($coupon_code);
-    } while ($coupon_id != 0);
-
-    odwp_write_log("codigo gerado:" . $coupon_code);
-    $product = wc_get_product( $product_id );
-        
-    $discount_type = 'fixed_cart';
-    $amount = $quantity * intval($product->get_price());
-
-    $coupon = array(
-        'post_title' => $coupon_code,
-        'post_content' => '',
-        'post_status' => 'publish',
-        'post_author' => 1,
-        'post_type' => 'shop_coupon'
-    );
-
-    $begin_date = strtotime('tomorrow');
-    $end_date = strtotime('tomorrow +2 years');
-
-    $new_coupon_id = wp_insert_post( $coupon );
-
-    update_post_meta( $new_coupon_id, 'discount_type', $discount_type );
-    update_post_meta( $new_coupon_id, 'coupon_amount', $amount );
-    update_post_meta( $new_coupon_id, 'individual_use', 'no' );
-    update_post_meta( $new_coupon_id, 'product_ids', '$product_id' );
-    update_post_meta( $new_coupon_id, 'usage_limit', '1' );
-    update_post_meta( $new_coupon_id, 'expiry_date', '' );
-    update_post_meta( $new_coupon_id, 'apply_before_tax', 'yes' );
-    update_post_meta( $new_coupon_id, 'free_shipping', 'no' );
-    update_post_meta( $new_coupon_id, 'bkap_coupon_start_date', $begin_date );
-    update_post_meta( $new_coupon_id, 'bkap_coupon_end_date', $end_date );
-
-    update_post_meta($order_id, '_jfutils_gen_coupon', $coupon_code);
-    return $coupon_code;
-}
 
 /**
  * Adiciona texto abaixo da quantidade do produto (single)
