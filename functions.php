@@ -200,7 +200,7 @@ add_action('woocommerce_email_before_order_table', 'odwp_formata_email', 20, 3);
  * @return void
  */
 function odwp_texto_apos_preco_agenda(){
-    echo "<span style='color:midnightblue;font-weight:bold;font-size:20px;'>👆 Escolha o úmero de pessoas";
+    echo "<span style='color:midnightblue;font-weight:bold;font-size:20px;'>👆 Escolha o número de pessoas";
 }
 add_action('woocommerce_after_add_to_cart_form', 'odwp_texto_apos_preco_agenda', 0);
 
