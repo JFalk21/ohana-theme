@@ -174,13 +174,8 @@ function odwp_formata_email($order, $sent_to_admin, $plain_text){
         switch ($produto) {
             case $wc_options['jfu-wc-ticket-product']:
 
-                $coupon_code = "";
-                
-                if($sent_to_admin){
-                    $coupon_code = jfutils_generate_coupon($wc_options['jfu-wc-booking-product'], $order->get_id(), $order_item->get_quantity());
-                } else {
-                    $coupon_code = get_post_meta($order->get_id(), '_jfutils_gen_coupon', true);
-                }
+                $coupon_code = jfutils_generate_coupon($wc_options['jfu-wc-booking-product'], $order->get_id(), $order_item->get_quantity());
+
                 if(!empty($coupon_code)) {
                     echo "<br><h2><strong>Cupom: " . $coupon_code ."<strong></h2><br/><br/>";
                 }
