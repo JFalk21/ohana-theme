@@ -42,7 +42,7 @@ if (!function_exists('odwp_write_log')) {
 }
 
 function odwp_enqueue_scripts() {
-    wp_enqueue_script('odwp-utils', get_stylesheet_directory_uri() . "/inc/js/utils.js", array('jquery'));
+    //wp_enqueue_script('odwp-utils', get_stylesheet_directory_uri() . "/inc/js/utils.js", array('jquery'));
 }
 
 add_action('wp_enqueue_scripts', 'odwp_enqueue_scripts');
